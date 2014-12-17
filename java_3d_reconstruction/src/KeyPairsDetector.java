@@ -1,9 +1,6 @@
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
-import org.opencv.features2d.DescriptorExtractor;
-import org.opencv.features2d.DescriptorMatcher;
-import org.opencv.features2d.FeatureDetector;
-import org.opencv.features2d.KeyPoint;
+import org.opencv.features2d.*;
 import org.opencv.highgui.Highgui;
 
 import java.util.ArrayList;
@@ -59,76 +56,67 @@ public class KeyPairsDetector {
 
         DescriptorMatcher descriptorMatcher = DescriptorMatcher.create(DescriptorMatcher.FLANNBASED);
         ArrayList<MatOfDMatch> matches = new ArrayList<MatOfDMatch>();
-        descriptorMatcher.knnMatch(descriptors1, descriptors2, matches, 2);
+        descriptorMatcher.knnMatch(descriptors1, descriptors2, matches, 1);
 
-        MatOfPoint2f points1 = new MatOfPoint2f();
-        MatOfPoint2f points2 = new MatOfPoint2f();
-        convertUnsortedKeyPointsIntoPoint2f(keyPoints1, keyPoints2, matches, points1, points2);
+        MatOfPoint2f srcPoints = new MatOfPoint2f();
+        MatOfPoint2f dstPoints = new MatOfPoint2f();
+        convertUnsortedKeyPointsIntoPoint2f(keyPoints1, keyPoints2, matches, srcPoints, dstPoints);
 
         Mat mask = new Mat();
-        Mat fundamentalMat = Calib3d.findFundamentalMat(points1, points2, Calib3d.RANSAC, 1.0, 0.98, mask);
+        Calib3d.findHomography(srcPoints,dstPoints,Calib3d.RANSAC,3,mask);
 
-        MatOfKeyPoint filteredPoints1= new MatOfKeyPoint();
-        MatOfKeyPoint filteredPoints2 = new MatOfKeyPoint();
-        getInliers(keyPoints1, keyPoints2, mask, matches, filteredPoints1, filteredPoints2);
 
-        convertSortedKeyPointsIntoPoint2f(filteredPoints1,filteredPoints2,points1,points2);
 
-        fundamentalMat = Calib3d.findFundamentalMat(points1,points2,Calib3d.FM_8POINT,0.0,0.0);
+//        Mat fundamentalMat = Calib3d.findFundamentalMat(points1, points2, Calib3d.RANSAC, 1.0, 0.98, mask);
+
+        List<MatOfDMatch> goodMatches = new ArrayList<MatOfDMatch>();
+        getInliers(keyPoints1, keyPoints2, mask, matches, goodMatches);
+
+//        convertSortedKeyPointsIntoPoint2f(filteredPoints1, filteredPoints2, points1, points2);
+//        MatOfPoint2f goodPoints1 = new MatOfPoint2f();
+//        MatOfPoint2f goodPoints2 = new MatOfPoint2f();
+//        convertUnsortedKeyPointsIntoPoint2f(keyPoints1, keyPoints2, goodPoints1, goodPoints2);
+//        Mat fundamentalMat = Calib3d.findFundamentalMat(points1, points2, Calib3d.FM_8POINT, 0.0, 0.0);
+
+        Mat outImg = new Mat(img1.rows(), img1.cols() * 2, img1.type());
+        Features2d.drawMatches2(img1, keyPoints1, img2, keyPoints2, goodMatches, outImg);
+        Highgui.imwrite("D:\\workspace\\pwr\\pwr-3dreconstruction\\java_3d_reconstruction\\images" +
+                "\\SylvainJpg\\S00a.jpg", outImg);
 
 
     }
-    private void getInliers(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2, Mat mask, ArrayList<MatOfDMatch>
-            matches, MatOfKeyPoint filteredPoints1, MatOfKeyPoint filteredPoints2) {
 
+    private void getInliers(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2, Mat mask, List<MatOfDMatch>
+            matches, List<MatOfDMatch> goodMatches) {
 
-        List<KeyPoint> pointsList1 = keyPoints1.toList();
-        List<KeyPoint> pointsList2 = keyPoints2.toList();
-
-        List<KeyPoint> inlierPointsList1 = new ArrayList<KeyPoint>();
-        List<KeyPoint> inlierPointsList2 = new ArrayList<KeyPoint>();
 
         for (int row = 0; row < mask.rows(); row++) {
             if (mask.get(row, 0)[0] == 1.0) {
-                inlierPointsList1.add(pointsList1.get((int) (matches.get(row).get(0, 0)[0])));
-                inlierPointsList2.add(pointsList2.get((int) (matches.get(row).get(0, 0)[1])));
-
-//                    System.out.print(pointsList1.get((int) (matches.get(row).get(0, 0)[0])).pt.x + "\t" +
-//                            pointsList1.get((int) (matches.get(row).get(0, 0)[0])).pt.y);
-//                    System.out.print("\t");
-//                    System.out.print(pointsList2.get((int) (matches.get(row).get(0, 0)[1])).pt.x + "\t" +
-//                            pointsList2.get((int) (matches.get(row).get(0, 0)[1])).pt.y);
-////
-//                    System.out.println();
-//                }
+                System.out.println(matches.get(row).get(0, 0)[0]);
+                System.out.println(matches.get(row).get(0, 0)[1]);
+                System.out.println(matches.get(row).dump());
+                goodMatches.add(matches.get(row));
             }
-            filteredPoints1.fromList(inlierPointsList1);
-            filteredPoints2.fromList(inlierPointsList2);
         }
     }
+
     private void convertUnsortedKeyPointsIntoPoint2f(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2,
-                                                     ArrayList<MatOfDMatch> matches, MatOfPoint2f points1, MatOfPoint2f points2) {
+                                                     List<MatOfDMatch> matches, MatOfPoint2f points1,
+                                                     MatOfPoint2f points2) {
 
 
-        KeyPoint[] kp1Array = keyPoints1.toArray();
-        KeyPoint[] kp2Array = keyPoints2.toArray();
+        List<KeyPoint> kplist1 = keyPoints1.toList();
+        List<KeyPoint> kplist2 = keyPoints2.toList();
 
         ArrayList<Point> pointsList1 = new ArrayList<Point>();
         ArrayList<Point> pointsList2 = new ArrayList<Point>();
 
-
-        for (MatOfDMatch match : matches) {
-//            System.out.print(match.get(0, 0)[0] + "\t" + match.get(0,0)[1] );
-//            System.out.println();
-            pointsList1.add(kp1Array[(int) (match.get(0, 0)[0])].pt);
-            pointsList2.add(kp2Array[(int) (match.get(0, 0)[1])].pt);
-
-//            System.out.println(kp1Array[(int) (
-//                    match.get(0, 0)[0])].pt.x + "\t" +
-//                    kp1Array[(int) (match.get(0, 0)[0])].pt.y + "\t"+
-//                    kp2Array[(int) (match.get(0, 0)[1])].pt.x + "\t"+
-//                    kp2Array[(int) (match.get(0, 0)[1])].pt.y );
+        for(MatOfDMatch match:matches){
+            pointsList1.add(kplist1.get((int)(match.get(0,0)[0])).pt);
+            pointsList2.add(kplist2.get((int)(match.get(0,0)[1])).pt);
         }
+
+
         points1.fromList(pointsList1);
         points2.fromList(pointsList2);
 
