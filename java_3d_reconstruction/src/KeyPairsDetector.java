@@ -18,9 +18,9 @@ public class KeyPairsDetector {
 
     public static void main(String[] args) {
         Mat img1 = Highgui.imread("D:\\workspace\\pwr\\pwr-3dreconstruction\\java_3d_reconstruction\\images" +
-                "\\SylvainJpg\\S00.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+                "\\SylvainJpg\\S02.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
         Mat img2 = Highgui.imread("D:\\workspace\\pwr\\pwr-3dreconstruction\\java_3d_reconstruction\\images" +
-                "\\SylvainJpg\\S01.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+                "\\SylvainJpg\\S03.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
         KeyPairsDetector keyPairsDetector = new KeyPairsDetector(img1, img2);
 
@@ -45,14 +45,10 @@ public class KeyPairsDetector {
     private void matchImages() {
         MatOfKeyPoint keyPoints1 = new MatOfKeyPoint();
         MatOfKeyPoint keyPoints2 = new MatOfKeyPoint();
-        FeatureDetector surfDetector = FeatureDetector.create(FeatureDetector.SURF);
-        surfDetector.detect(getImg1(), keyPoints1);
-        surfDetector.detect(getImg2(), keyPoints2);
+        detectKeypoints(keyPoints1, keyPoints2);
 
         Mat descriptors1 = new Mat(), descriptors2 = new Mat();
-        DescriptorExtractor surfExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
-        surfExtractor.compute(getImg1(), keyPoints1, descriptors1);
-        surfExtractor.compute(getImg2(), keyPoints2, descriptors2);
+        computeDescriptors(keyPoints1, keyPoints2, descriptors1, descriptors2);
 
         DescriptorMatcher descriptorMatcher = DescriptorMatcher.create(DescriptorMatcher.FLANNBASED);
         ArrayList<MatOfDMatch> matches = new ArrayList<MatOfDMatch>();
@@ -63,38 +59,94 @@ public class KeyPairsDetector {
         convertUnsortedKeyPointsIntoPoint2f(keyPoints1, keyPoints2, matches, srcPoints, dstPoints);
 
         Mat mask = new Mat();
-        Calib3d.findHomography(srcPoints,dstPoints,Calib3d.RANSAC,3,mask);
+        Calib3d.findHomography(srcPoints, dstPoints, Calib3d.RANSAC, 5, mask);
 
-
-
-//        Mat fundamentalMat = Calib3d.findFundamentalMat(points1, points2, Calib3d.RANSAC, 1.0, 0.98, mask);
 
         List<MatOfDMatch> goodMatches = new ArrayList<MatOfDMatch>();
-        getInliers(keyPoints1, keyPoints2, mask, matches, goodMatches);
-
-//        convertSortedKeyPointsIntoPoint2f(filteredPoints1, filteredPoints2, points1, points2);
-//        MatOfPoint2f goodPoints1 = new MatOfPoint2f();
-//        MatOfPoint2f goodPoints2 = new MatOfPoint2f();
-//        convertUnsortedKeyPointsIntoPoint2f(keyPoints1, keyPoints2, goodPoints1, goodPoints2);
-//        Mat fundamentalMat = Calib3d.findFundamentalMat(points1, points2, Calib3d.FM_8POINT, 0.0, 0.0);
+        getInliers(mask, matches, goodMatches);
 
         Mat outImg = new Mat(img1.rows(), img1.cols() * 2, img1.type());
         Features2d.drawMatches2(img1, keyPoints1, img2, keyPoints2, goodMatches, outImg);
+//        Highgui.imwrite("D:\\workspace\\pwr\\pwr-3dreconstruction\\java_3d_reconstruction\\images" +
+//                "\\SylvainJpg\\S00a.jpg", outImg);
+        Mat fundamentalMat = computeFundamentalMatrix(srcPoints, dstPoints);
+
+
+        Mat epiLinesOn2 = new Mat(), epiLinesOn1 = new Mat();
+        computeEpiLines(srcPoints, dstPoints, fundamentalMat, epiLinesOn2, epiLinesOn1);
+        drawEpiLines(outImg, epiLinesOn1, epiLinesOn2);
+
         Highgui.imwrite("D:\\workspace\\pwr\\pwr-3dreconstruction\\java_3d_reconstruction\\images" +
                 "\\SylvainJpg\\S00a.jpg", outImg);
 
+    }
+
+    private void computeEpiLines(MatOfPoint2f srcPoints, MatOfPoint2f dstPoints, Mat fundamentalMat, Mat epiLinesOn2, Mat epiLinesOn1) {
+        Calib3d.computeCorrespondEpilines(srcPoints, 2, fundamentalMat, epiLinesOn2);
+        Calib3d.computeCorrespondEpilines(dstPoints, 2, fundamentalMat, epiLinesOn1);
+    }
+
+    private void drawEpiLines(Mat outImg, Mat epiLinesOn1, Mat epiLinesOn2) {
+//        cv::line(image_out,
+//                cv::Point(0,-(*it)[2]/(*it)[1]),
+//        cv::Point(image2.cols,-((*it)[2]+   (*it)[0]*image2.cols)/(*it)[1]),
+//        cv::Scalar(255,255,255));
+//        Mat outImg = new Mat(img1.rows(),img1.cols()*2,img1.type());
+        int epiLinesCount = epiLinesOn1.rows();
+        System.out.println(epiLinesOn1.dump());
+
+        double a, b, c;
+
+
+        for (int line = 0; line < epiLinesCount; line++) {
+            a = epiLinesOn1.get(line, 0)[0];
+            b = epiLinesOn1.get(line, 0)[1];
+            c = epiLinesOn1.get(line, 0)[2];
+            Point p1 = new Point(0, -c / b);
+            Point p2 = new Point(img1.cols(), -(c + a * img1.cols()) / b);
+            Scalar color = new Scalar(255, 255, 255);
+            Core.line(outImg, p1, p2, color);
+
+        }
+
+        for (int line = 0; line < epiLinesCount; line++) {
+            a = epiLinesOn2.get(line, 0)[0];
+            b = epiLinesOn2.get(line, 0)[1];
+            c = epiLinesOn2.get(line, 0)[2];
+            Point p1 = new Point(img1.cols(), -c / b);
+            Point p2 = new Point(img1.cols()*2, -(c + a * img1.cols()*2) / b);
+            Scalar color = new Scalar(255, 255, 255);
+            Core.line(outImg, p1, p2, color);
+
+        }
 
     }
 
-    private void getInliers(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2, Mat mask, List<MatOfDMatch>
+    private void computeDescriptors(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2, Mat descriptors1, Mat descriptors2) {
+        DescriptorExtractor surfExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
+        surfExtractor.compute(getImg1(), keyPoints1, descriptors1);
+        surfExtractor.compute(getImg2(), keyPoints2, descriptors2);
+    }
+
+    private void detectKeypoints(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2) {
+        FeatureDetector surfDetector = FeatureDetector.create(FeatureDetector.SURF);
+        surfDetector.detect(getImg1(), keyPoints1);
+        surfDetector.detect(getImg2(), keyPoints2);
+    }
+
+    private Mat computeFundamentalMatrix(MatOfPoint2f srcPoints, MatOfPoint2f dstPoints) {
+        return Calib3d.findFundamentalMat(srcPoints, dstPoints, Calib3d.FM_8POINT, 0.0, 0.0);
+    }
+
+    private void getInliers(Mat mask, List<MatOfDMatch>
             matches, List<MatOfDMatch> goodMatches) {
 
 
         for (int row = 0; row < mask.rows(); row++) {
             if (mask.get(row, 0)[0] == 1.0) {
-                System.out.println(matches.get(row).get(0, 0)[0]);
-                System.out.println(matches.get(row).get(0, 0)[1]);
-                System.out.println(matches.get(row).dump());
+//                System.out.println(matches.get(row).get(0, 0)[0]);
+//                System.out.println(matches.get(row).get(0, 0)[1]);
+//                System.out.println(matches.get(row).dump());
                 goodMatches.add(matches.get(row));
             }
         }
@@ -111,9 +163,9 @@ public class KeyPairsDetector {
         ArrayList<Point> pointsList1 = new ArrayList<Point>();
         ArrayList<Point> pointsList2 = new ArrayList<Point>();
 
-        for(MatOfDMatch match:matches){
-            pointsList1.add(kplist1.get((int)(match.get(0,0)[0])).pt);
-            pointsList2.add(kplist2.get((int)(match.get(0,0)[1])).pt);
+        for (MatOfDMatch match : matches) {
+            pointsList1.add(kplist1.get((int) (match.get(0, 0)[0])).pt);
+            pointsList2.add(kplist2.get((int) (match.get(0, 0)[1])).pt);
         }
 
 
