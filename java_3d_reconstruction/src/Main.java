@@ -14,7 +14,7 @@ public class Main {
         File file2 = new File("D:\\workspace\\pwr\\java_3d_reconstruction\\images\\SylvainJpg\\S03.jpg");
         Mat mat1 = Highgui.imread(file1.getAbsolutePath());
         Mat mat2 = Highgui.imread(file2.getAbsolutePath());
-//        Calib3d.findFundamentalMat(mat1,mat2,Calib3d.RANSAC,1)
+//        Calib3d.findFundamentalMat(mat1,mat2,Calib3d.RANSAC,1);
 
     }
 }
