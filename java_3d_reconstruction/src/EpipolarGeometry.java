@@ -32,7 +32,8 @@ public class EpipolarGeometry {
 
 
     private void computeFundamentalMatrix() {
-        fundamentalMatrix  = Calib3d.findFundamentalMat(srcPoints, dstPoints, Calib3d.FM_8POINT, 0.0, 0.0);
+        Mat outliers = new Mat();
+        fundamentalMatrix  = Calib3d.findFundamentalMat(srcPoints, dstPoints, Calib3d.RANSAC, 5, 0.6,outliers);
     }
 
     private void computeEpiLines() {

@@ -120,13 +120,13 @@ public class KeyPairsDetector {
     }
 
     private void computeDescriptors(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2, Mat descriptors1, Mat descriptors2) {
-        DescriptorExtractor surfExtractor = DescriptorExtractor.create(DescriptorExtractor.SURF);
+        DescriptorExtractor surfExtractor = DescriptorExtractor.create(DescriptorExtractor.SIFT);
         surfExtractor.compute(getImg1(), keyPoints1, descriptors1);
         surfExtractor.compute(getImg2(), keyPoints2, descriptors2);
     }
 
     private void detectKeyPoints(MatOfKeyPoint keyPoints1, MatOfKeyPoint keyPoints2) {
-        FeatureDetector surfDetector = FeatureDetector.create(FeatureDetector.SURF);
+        FeatureDetector surfDetector = FeatureDetector.create(FeatureDetector.SIFT);
         surfDetector.detect(getImg1(), keyPoints1);
         surfDetector.detect(getImg2(), keyPoints2);
     }
