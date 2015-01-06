@@ -5,10 +5,8 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.features2d.DMatch;
-import org.opencv.features2d.DescriptorExtractor;
-import org.opencv.features2d.DescriptorMatcher;
-import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.*;
+import org.opencv.highgui.Highgui;
 import reconstruction.point.PointHelpers;
 
 import java.util.ArrayList;
@@ -28,10 +26,12 @@ public class Matcher {
     DescriptorMatcher matcher;
     //keypoints
     MatOfKeyPoint keyPoints1, keyPoints2;
+    MatOfPoint2f matchPoints1,matchPoints2;
     //descriptors
     Mat descriptors1, descriptors2;
     //mateches
     List<MatOfDMatch> matches1, matches2;
+    List<DMatch> goodMatches;
     double ratio = 0.65;
     double epipolarDistance = 1.0;
     double ransacConfidence = 0.98;
@@ -50,16 +50,31 @@ public class Matcher {
         //clear matches
         ratioTest(getMatches1());
         ratioTest(getMatches2());
-        List<DMatch> goodMatches = symTest();
+        List<DMatch> symMatches = symTest();
         //FUNDAMENTAL MATRIX TEST AND RECALCULATION
         //points for fundamental matrix
         MatOfPoint2f points1 = new MatOfPoint2f();
         MatOfPoint2f points2 = new MatOfPoint2f();
-        PointHelpers.convertKeyPointsToMatOfPoint2f(getKeyPoints1(),getKeyPoints2(),goodMatches,points1,points2);
+        PointHelpers.convertKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), symMatches, points1, points2);
+        this.goodMatches = ransacTest(points1, points2, symMatches);
+        PointHelpers.convertKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        this.matchPoints1 = points1;
+        this.matchPoints2 = points2;
 
+
+//        MatOfDMatch gm = new MatOfDMatch();
+//        gm.fromList(goodMatches);
 
     }
 
+    public Mat drawMatchesAndKeyPoints(String path) {
+        Mat outImg = new Mat(img1.rows(), img1.cols() * 2, img1.type());
+        MatOfDMatch gm = new MatOfDMatch();
+        gm.fromList(getGoodMatches());
+        Features2d.drawMatches(getImg1(), getKeyPoints1(), img2, getKeyPoints2(), gm, outImg);
+        Highgui.imwrite(path, outImg);
+        return outImg;
+    }
 
     private void detect() {
         MatOfKeyPoint keyPoints1 = new MatOfKeyPoint();
@@ -86,8 +101,8 @@ public class Matcher {
     private void matchDescriptors() {
         List<MatOfDMatch> matches1 = new ArrayList<MatOfDMatch>(), matches2 = new ArrayList<MatOfDMatch>();
 
-        getMatcher().knnMatch(getDescriptors1(),getDescriptors2(), matches1, 2);
-        getMatcher().knnMatch(getDescriptors2(),getDescriptors1(), matches2, 2);
+        getMatcher().knnMatch(getDescriptors1(), getDescriptors2(), matches1, 2);
+        getMatcher().knnMatch(getDescriptors2(), getDescriptors1(), matches2, 2);
 
         this.matches1 = matches1;
         this.matches2 = matches2;
@@ -100,40 +115,41 @@ public class Matcher {
         double ratio;
         while (it.hasNext()) {
             match = it.next();
-                if(match.rows()>1){
-                    ratio = getDistanceFromKNNMatch(match,0)/getDistanceFromKNNMatch(match,1);
-                    if(ratio>this.ratio){
-                        it.remove();
-                    }
-                } else{
+            if (match.rows() > 1) {
+                ratio = getDistanceFromKNNMatch(match, 0) / getDistanceFromKNNMatch(match, 1);
+                if (ratio > this.ratio) {
                     it.remove();
                 }
+            } else {
+                it.remove();
+            }
         }
 
     }
-    private List<DMatch> symTest(){
-        MatOfDMatch match1,match2;
+
+    private List<DMatch> symTest() {
+        MatOfDMatch match1, match2;
         Iterator<MatOfDMatch> it2;
-        double queryIdx1,trainIdx1,queryIdx2,trainIdx2;
+        double queryIdx1, trainIdx1, queryIdx2, trainIdx2;
         List<DMatch> symMatches = new ArrayList<DMatch>();
         Iterator<MatOfDMatch> it1 = getMatches1().iterator();
-        while (it1.hasNext()){
+        while (it1.hasNext()) {
             match1 = it1.next();
             queryIdx1 = PointHelpers.getQueryIdxFromMatOfDMatch(match1);
             trainIdx1 = PointHelpers.getTrainIdxFromMatOfDMatch(match1);
 
             it2 = getMatches2().iterator();
-            while (it2.hasNext()){
+            while (it2.hasNext()) {
 //                System.out.println("b");
-                match2=it2.next();
+                match2 = it2.next();
                 queryIdx2 = PointHelpers.getQueryIdxFromMatOfDMatch(match2);
                 trainIdx2 = PointHelpers.getTrainIdxFromMatOfDMatch(match2);
 
-                if(queryIdx1==trainIdx2 && queryIdx2==trainIdx1){
+                if (queryIdx1 == trainIdx2 && queryIdx2 == trainIdx1) {
                     System.out.println(match1.dump());
                     System.out.println("--");
                     System.out.println(match2.dump());
-                    symMatches.add(new DMatch((int)queryIdx1,(int)trainIdx1,(float)getDistanceFromKNNMatch(match1,0)));
+                    symMatches.add(new DMatch((int) queryIdx1, (int) trainIdx1, (float) getDistanceFromKNNMatch(match1, 0)));
                     break;
                 }
 
@@ -142,12 +158,23 @@ public class Matcher {
         return symMatches;
     }
 
-    private void ransacTest(MatOfPoint2f points1,MatOfPoint2f points2){
+    private List<DMatch> ransacTest(MatOfPoint2f points1, MatOfPoint2f points2, List<DMatch> matches) {
         Mat mask = new Mat();
 
-        Mat fundamentalMat = Calib3d.findFundamentalMat(points1,points2,Calib3d.RANSAC,epipolarDistance,
-                ransacConfidence,mask);
-        
+        Calib3d.findFundamentalMat(points1, points2, Calib3d.RANSAC, epipolarDistance, ransacConfidence, mask);
+        List<DMatch> goodMatches = filterGoodMatches(matches, mask);
+        return goodMatches;
+    }
+
+    private List<DMatch> filterGoodMatches(List<DMatch> matches, Mat mask) {
+        List<DMatch> goodMatches = new ArrayList<DMatch>();
+        for (int matchIndex = 0; matchIndex < mask.rows(); matchIndex++) {
+            if (mask.get(matchIndex, 0)[0] == 1) {
+                goodMatches.add(matches.get(matchIndex));
+                System.out.println(matches.get(matchIndex));
+            }
+        }
+        return goodMatches;
     }
 
     public void printMatches() {
@@ -159,14 +186,14 @@ public class Matcher {
 
             System.out.println(i + " " + matOfDMatch.dump());
             System.out.println(PointHelpers.getQueryIdxFromMatOfDMatch(matOfDMatch) + " " + PointHelpers.getTrainIdxFromMatOfDMatch(matOfDMatch));
-            System.out.println(getDistanceFromKNNMatch(matOfDMatch,0) + " " + getDistanceFromKNNMatch(matOfDMatch,1)
-                    + " " + getDistanceFromKNNMatch(matOfDMatch,0)/getDistanceFromKNNMatch(matOfDMatch,1));
+            System.out.println(getDistanceFromKNNMatch(matOfDMatch, 0) + " " + getDistanceFromKNNMatch(matOfDMatch, 1)
+                    + " " + getDistanceFromKNNMatch(matOfDMatch, 0) / getDistanceFromKNNMatch(matOfDMatch, 1));
         }
         System.out.println(getMatches1().size());
     }
 
-    private double getDistanceFromKNNMatch(MatOfDMatch matOfDMatch, int neighbourIndex){
-        return matOfDMatch.get(neighbourIndex,0)[3];
+    private double getDistanceFromKNNMatch(MatOfDMatch matOfDMatch, int neighbourIndex) {
+        return matOfDMatch.get(neighbourIndex, 0)[3];
     }
 
     public Mat getImg1() {
@@ -213,5 +240,15 @@ public class Matcher {
         return matches2;
     }
 
+    public List<DMatch> getGoodMatches() {
+        return goodMatches;
+    }
 
+    public MatOfPoint2f getMatchPoints1() {
+        return matchPoints1;
+    }
+
+    public MatOfPoint2f getMatchPoints2() {
+        return matchPoints2;
+    }
 }
