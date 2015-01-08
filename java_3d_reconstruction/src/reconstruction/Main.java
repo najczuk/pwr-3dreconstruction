@@ -3,6 +3,7 @@ package reconstruction;
 import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
 import reconstruction.geometry.EpipolarGeometry;
+import reconstruction.geometry.CameraMatrices;
 import reconstruction.matcher.Matcher;
 
 /**
@@ -25,9 +26,17 @@ public class Main {
         outImg = geometry.drawEpiLines(outImg);
         Highgui.imwrite("images\\SylvainJpg\\out1.jpg", outImg);
 
+//        DRAW SEPARATE IMGS
+//        Mat im1 = geometry.drawEpipolarLinesOnImage(matcher.getImg1(),0);
+//        Mat im2 = geometry.drawEpipolarLinesOnImage(matcher.getImg2(),1);
 
-        Mat im1 = geometry.drawEpipolarLinesOnImage(matcher.getImg1(),0);
-        Mat im2 = geometry.drawEpipolarLinesOnImage(matcher.getImg2(),1);
+        CameraMatrices calculator = new CameraMatrices(geometry.getFundamentalMatrix());
+        calculator.extractRTfromEssentialMatrix();
+        calculator.calculateCameraMatrices();
+
+//        MULTI TEST
+//        Mat result = calculator.multiplyMat(calculator.generateWMat(),calculator.generateZMat());
+//        System.out.println(result.dump());
 
 
 //        matcher.printMatches();

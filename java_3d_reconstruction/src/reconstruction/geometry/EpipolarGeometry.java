@@ -22,7 +22,7 @@ public class EpipolarGeometry {
 
 
     MatOfPoint2f srcPoints, dstPoints;
-    Mat fundamentalMatrix, essentialMatrix, epilinesSrc, epilinesDst;
+    Mat fundamentalMatrix, epilinesSrc, epilinesDst;
 
     public EpipolarGeometry(MatOfPoint2f srcPoints, MatOfPoint2f dstPoints) {
         this.srcPoints = srcPoints;
@@ -121,27 +121,16 @@ public class EpipolarGeometry {
         return outImg;
     }
 
-    private Mat combineImages(Mat img_object, Mat img_scene) {
-        Mat combine = new Mat(img_object.rows(), img_object.cols() * 2, img_object.type());
 
+    public MatOfPoint2f getSrcPoints() {
+        return srcPoints;
+    }
 
-        int size = (int) img_object.total() * img_object.channels();
-        float[] buff = new float[size];
-//        img_object.get(0, 0, buff);
+    public MatOfPoint2f getDstPoints() {
+        return dstPoints;
+    }
 
-        for (int col = 0; col < combine.cols(); col++) {
-            if (col < img_object.cols()) {
-                for (int row = 0; row < combine.rows(); row++) {
-//                    img_object.get(row, col, buff);
-//                    combine.put(col, row, buff);
-                }
-            } else {
-                for (int row = 0; row < combine.rows(); row++) {
-                    img_object.get(row, col, buff);
-                    combine.put(col, row, buff);
-                }
-            }
-        }
-        return combine;
+    public Mat getFundamentalMatrix() {
+        return fundamentalMatrix;
     }
 }
