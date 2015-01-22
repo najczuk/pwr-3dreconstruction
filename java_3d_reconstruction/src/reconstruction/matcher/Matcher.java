@@ -26,7 +26,7 @@ public class Matcher {
     DescriptorMatcher matcher;
     //keypoints
     MatOfKeyPoint keyPoints1, keyPoints2;
-    MatOfPoint2f matchPoints1,matchPoints2;
+    MatOfPoint2f matchPoints1, matchPoints2;
     //descriptors
     Mat descriptors1, descriptors2;
     //mateches
@@ -45,9 +45,13 @@ public class Matcher {
 
         detect();
         descript();
-        matchDescriptors();
+        sparseMatcher();
+//        ofMatcher();
 
-        //clear matches
+    }
+
+    private void sparseMatcher() {
+        matchDescriptors();
         ratioTest(getMatches1());
         ratioTest(getMatches2());
         List<DMatch> symMatches = symTest();
@@ -60,7 +64,6 @@ public class Matcher {
         PointHelpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
         this.matchPoints1 = points1;
         this.matchPoints2 = points2;
-
     }
 
     public Mat drawMatchesAndKeyPoints(String path) {
@@ -192,7 +195,7 @@ public class Matcher {
         return matOfDMatch.get(neighbourIndex, 0)[3];
     }
 
-    public void ofMatch() {
+    public void ofMatcher() {
 
 
         MatOfPoint2f leftPointsMat = PointHelpers.keyPointsToMatOfPoint2f(keyPoints1);
@@ -235,6 +238,14 @@ public class Matcher {
             System.out.println(match.dump());
         }
         List<DMatch> goodMatchesWithOriginalQueryIdx = ofRatioTest(bfMatches, rightPointsToFindBackIndex);
+        this.goodMatches = goodMatchesWithOriginalQueryIdx;
+        MatOfPoint2f points1 = new MatOfPoint2f();
+        MatOfPoint2f points2 = new MatOfPoint2f();
+
+
+        PointHelpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        this.matchPoints1 = points1;
+        this.matchPoints2 = points2;
 
 
 
@@ -253,7 +264,6 @@ public class Matcher {
                 queryIdx = (int) PointHelpers.getQueryIdxFromMatOfDMatch(match);
                 oldQueryIdx = originalIndexes.get(queryIdx);
                 trainIdx = (int) PointHelpers.getTrainIdxFromMatOfDMatch(match);
-                System.out.println("here");
 
                 goodMatchesWithOriginalIndexes.add(new DMatch(
                         oldQueryIdx,
