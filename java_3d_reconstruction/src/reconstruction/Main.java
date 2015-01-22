@@ -17,8 +17,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Mat img1 = Highgui.imread("images/SylvainJpg/S01.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-        Mat img2 = Highgui.imread("images/SylvainJpg/S02.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img1 = Highgui.imread("images/SylvainJpg/S02.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img2 = Highgui.imread("images/SylvainJpg/S03.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
         Matcher matcher = new Matcher(img1, img2);
         Mat outImg = matcher.drawMatchesAndKeyPoints("images\\SylvainJpg\\out.jpg");

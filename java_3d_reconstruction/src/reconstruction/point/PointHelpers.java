@@ -8,6 +8,7 @@ import org.opencv.features2d.DMatch;
 import org.opencv.features2d.KeyPoint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,8 +19,8 @@ import java.util.List;
 public class PointHelpers {
 
 
-    public static void convertKeyPointsToMatOfPoint2f(MatOfKeyPoint srcPoints, MatOfKeyPoint dstPoints,
-                                                      List<DMatch> matches, MatOfPoint2f srcFilteredMat, MatOfPoint2f dstFilteredMat) {
+    public static void sortedKeyPointsToMatOfPoint2f(MatOfKeyPoint srcPoints, MatOfKeyPoint dstPoints,
+                                                     List<DMatch> matches, MatOfPoint2f srcFilteredMat, MatOfPoint2f dstFilteredMat) {
         KeyPoint[] srcArray = srcPoints.toArray();
         KeyPoint[] dstArray = dstPoints.toArray();
         ArrayList<Point> srcFilteredPoints = new ArrayList<Point>();
@@ -32,7 +33,46 @@ public class PointHelpers {
 
         srcFilteredMat.fromList(srcFilteredPoints);
         dstFilteredMat.fromList(dstFilteredPoints);
+    }
 
+    public static MatOfPoint2f keyPointsToMatOfPoint2f(MatOfKeyPoint keyPoints){
+
+
+        List<Point> pointsList = new ArrayList<Point>();
+        KeyPoint[] kpArr = keyPoints.toArray();
+        for (int i = 0; i < kpArr.length; i++) {
+           pointsList.add(kpArr[i].pt);
+        }
+        MatOfPoint2f points = new MatOfPoint2f();
+        points.fromList(pointsList);
+
+        return points;
+    }
+
+    public static List<Point> keyPointsToPointList(MatOfKeyPoint keyPoints){
+
+
+        List<Point> pointsList = new ArrayList<Point>();
+        KeyPoint[] kpArr = keyPoints.toArray();
+        for (int i = 0; i < kpArr.length; i++) {
+            pointsList.add(kpArr[i].pt);
+        }
+
+        return pointsList;
+    }
+
+    public static List<Point> matOfPoint2fToList(MatOfPoint2f matOfPoint2f){
+        Point[] pointArr = matOfPoint2f.toArray();
+        List<Point> pointList = new ArrayList<Point>(Arrays.asList(pointArr));
+        return pointList;
+    }
+    public static MatOfPoint2f pointsListToMatOfPoint2f(List<Point> points){
+        MatOfPoint2f matOfPoint2f = new MatOfPoint2f();
+        matOfPoint2f.fromList(points);
+        return matOfPoint2f;
+    }
+    public static double distanceFromKNNMatch(MatOfDMatch matOfDMatch, int neighbourIndex) {
+        return matOfDMatch.get(neighbourIndex, 0)[3];
     }
 
     public static double getQueryIdxFromMatOfDMatch(MatOfDMatch matOfDMatch) {
