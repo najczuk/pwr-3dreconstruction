@@ -126,6 +126,14 @@ public class CameraMatrices {
         return kpMat;
     }
 
+    public Mat getP() {
+        return p;
+    }
+
+    public Mat getP1() {
+        return p1;
+    }
+
     public Mat getFundamentalMat() {
         return fundamentalMat;
     }

@@ -32,7 +32,8 @@ public class Main {
 
         CameraMatrices calculator = new CameraMatrices(geometry.getFundamentalMatrix());
         calculator.extractRTfromEssentialMatrix();
-        calculator.calculateCameraMatrices();
+        System.out.println(calculator.getP1().dump());
+//        calculator.calculateCameraMatrices();
 
 //        MULTI TEST
 //        Mat result = calculator.multiplyMat(calculator.generateWMat(),calculator.generateZMat());

@@ -247,6 +247,8 @@ public class Matcher {
         this.matchPoints1 = points1;
         this.matchPoints2 = points2;
 
+        this.goodMatches = ransacTest(points1,points2,this.goodMatches);
+
 
 
     }
