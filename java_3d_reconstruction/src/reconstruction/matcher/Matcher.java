@@ -6,7 +6,7 @@ import org.opencv.features2d.*;
 import org.opencv.highgui.Highgui;
 import org.opencv.utils.Converters;
 import org.opencv.video.Video;
-import reconstruction.point.PointHelpers;
+import reconstruction.point.Helpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,9 +59,9 @@ public class Matcher {
         //points for fundamental matrix
         MatOfPoint2f points1 = new MatOfPoint2f();
         MatOfPoint2f points2 = new MatOfPoint2f();
-        PointHelpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), symMatches, points1, points2);
+        Helpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), symMatches, points1, points2);
         this.goodMatches = ransacTest(points1, points2, symMatches);
-        PointHelpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        Helpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
         this.matchPoints1 = points1;
         this.matchPoints2 = points2;
     }
@@ -134,15 +134,15 @@ public class Matcher {
         Iterator<MatOfDMatch> it1 = getMatches1().iterator();
         while (it1.hasNext()) {
             match1 = it1.next();
-            queryIdx1 = PointHelpers.getQueryIdxFromMatOfDMatch(match1);
-            trainIdx1 = PointHelpers.getTrainIdxFromMatOfDMatch(match1);
+            queryIdx1 = Helpers.getQueryIdxFromMatOfDMatch(match1);
+            trainIdx1 = Helpers.getTrainIdxFromMatOfDMatch(match1);
 
             it2 = getMatches2().iterator();
             while (it2.hasNext()) {
 //                System.out.println("b");
                 match2 = it2.next();
-                queryIdx2 = PointHelpers.getQueryIdxFromMatOfDMatch(match2);
-                trainIdx2 = PointHelpers.getTrainIdxFromMatOfDMatch(match2);
+                queryIdx2 = Helpers.getQueryIdxFromMatOfDMatch(match2);
+                trainIdx2 = Helpers.getTrainIdxFromMatOfDMatch(match2);
 
                 if (queryIdx1 == trainIdx2 && queryIdx2 == trainIdx1) {
                     System.out.println(match1.dump());
@@ -184,7 +184,7 @@ public class Matcher {
             matOfDMatch = getMatches2().get(i);
 
             System.out.println(i + " " + matOfDMatch.dump());
-            System.out.println(PointHelpers.getQueryIdxFromMatOfDMatch(matOfDMatch) + " " + PointHelpers.getTrainIdxFromMatOfDMatch(matOfDMatch));
+            System.out.println(Helpers.getQueryIdxFromMatOfDMatch(matOfDMatch) + " " + Helpers.getTrainIdxFromMatOfDMatch(matOfDMatch));
             System.out.println(getDistanceFromKNNMatch(matOfDMatch, 0) + " " + getDistanceFromKNNMatch(matOfDMatch, 1)
                     + " " + getDistanceFromKNNMatch(matOfDMatch, 0) / getDistanceFromKNNMatch(matOfDMatch, 1));
         }
@@ -198,7 +198,7 @@ public class Matcher {
     public void ofMatcher() {
 
 
-        MatOfPoint2f leftPointsMat = PointHelpers.keyPointsToMatOfPoint2f(keyPoints1);
+        MatOfPoint2f leftPointsMat = Helpers.keyPointsToMatOfPoint2f(keyPoints1);
         MatOfPoint2f rightPointsMat = new MatOfPoint2f();
 
         //calculate leftPoints movement
@@ -225,7 +225,7 @@ public class Matcher {
 
         //match rightPoints found by OF to its features
         Mat rightPointsToFindMat = Converters.vector_Point2f_to_Mat(rightPointsToFind).reshape(1, rightPointsToFind.size());
-        Mat rightPointsFeatures = PointHelpers.keyPointsToMatOfPoint2f(keyPoints2).reshape(1, keyPoints2.rows());
+        Mat rightPointsFeatures = Helpers.keyPointsToMatOfPoint2f(keyPoints2).reshape(1, keyPoints2.rows());
 
 //        System.out.println(rightPointsToFindMat.dump());
 //        System.out.println(rightPointsFeatures.dump());
@@ -243,7 +243,7 @@ public class Matcher {
         MatOfPoint2f points2 = new MatOfPoint2f();
 
 
-        PointHelpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        Helpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
         this.matchPoints1 = points1;
         this.matchPoints2 = points2;
 
@@ -263,26 +263,26 @@ public class Matcher {
         while (it.hasNext()) {
             match = it.next();
             if (match.rows() == 1) {
-                queryIdx = (int) PointHelpers.getQueryIdxFromMatOfDMatch(match);
+                queryIdx = (int) Helpers.getQueryIdxFromMatOfDMatch(match);
                 oldQueryIdx = originalIndexes.get(queryIdx);
-                trainIdx = (int) PointHelpers.getTrainIdxFromMatOfDMatch(match);
+                trainIdx = (int) Helpers.getTrainIdxFromMatOfDMatch(match);
 
                 goodMatchesWithOriginalIndexes.add(new DMatch(
                         oldQueryIdx,
                         trainIdx,
-                        (float) PointHelpers.distanceFromKNNMatch(match, 0)
+                        (float) Helpers.distanceFromKNNMatch(match, 0)
                 ));
             } else if (match.rows() > 1) {
-                ratio = PointHelpers.distanceFromKNNMatch(match, 0) / PointHelpers.distanceFromKNNMatch(match, 1);
+                ratio = Helpers.distanceFromKNNMatch(match, 0) / Helpers.distanceFromKNNMatch(match, 1);
                 if (ratio <= ratio) {
-                    queryIdx = (int) PointHelpers.getQueryIdxFromMatOfDMatch(match);
+                    queryIdx = (int) Helpers.getQueryIdxFromMatOfDMatch(match);
                     oldQueryIdx = originalIndexes.get(queryIdx);
-                    trainIdx = (int) PointHelpers.getTrainIdxFromMatOfDMatch(match);
+                    trainIdx = (int) Helpers.getTrainIdxFromMatOfDMatch(match);
 
                     goodMatchesWithOriginalIndexes.add(new DMatch(
                             oldQueryIdx,
                             trainIdx,
-                            (float) PointHelpers.distanceFromKNNMatch(match, 0)
+                            (float) Helpers.distanceFromKNNMatch(match, 0)
                     ));
                 }
             }

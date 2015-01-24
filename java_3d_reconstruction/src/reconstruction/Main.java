@@ -5,6 +5,7 @@ import org.opencv.highgui.Highgui;
 import reconstruction.geometry.EpipolarGeometry;
 import reconstruction.geometry.CameraMatrices;
 import reconstruction.matcher.Matcher;
+import reconstruction.triangulation.Triangulator;
 
 /**
  * User: Adrian
@@ -17,8 +18,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Mat img1 = Highgui.imread("images/SylvainJpg/S02.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-        Mat img2 = Highgui.imread("images/SylvainJpg/S03.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img1 = Highgui.imread("images/sfinks/20150105_221355.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img2 = Highgui.imread("images/sfinks/20150105_221400.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
         Matcher matcher = new Matcher(img1, img2);
         Mat outImg = matcher.drawMatchesAndKeyPoints("images\\SylvainJpg\\out.jpg");
@@ -31,8 +32,18 @@ public class Main {
 //        Mat im2 = geometry.drawEpipolarLinesOnImage(matcher.getImg2(),1);
 
         CameraMatrices calculator = new CameraMatrices(geometry.getFundamentalMatrix());
-        calculator.extractRTfromEssentialMatrix();
-        System.out.println(calculator.getP1().dump());
+
+        System.out.println("fundamental:" + calculator.getFundamentalMat().dump());
+        System.out.println("k mat:" + calculator.getKMat().dump());
+        System.out.println("essential:" + calculator.getEssentialMat().dump());
+////        System.out.println(calculator.getEssentialMat().type());
+//        calculator.extractRTfromEssentialMatrix();
+//        System.out.println("p1 matrix");
+//        System.out.println(calculator.getP1().dump());
+//
+//        Triangulator triangulator = new Triangulator(matcher.getMatchPoints1(),matcher.getMatchPoints2(),calculator
+//                .getP(),calculator.getP1());
+
 //        calculator.calculateCameraMatrices();
 
 //        MULTI TEST

@@ -1,9 +1,6 @@
 package reconstruction.point;
 
-import org.opencv.core.MatOfDMatch;
-import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
+import org.opencv.core.*;
 import org.opencv.features2d.DMatch;
 import org.opencv.features2d.KeyPoint;
 
@@ -16,7 +13,7 @@ import java.util.List;
  * Date: 1/6/2015
  * Time: 00:17
  */
-public class PointHelpers {
+public class Helpers {
 
 
     public static void sortedKeyPointsToMatOfPoint2f(MatOfKeyPoint srcPoints, MatOfKeyPoint dstPoints,
@@ -61,10 +58,19 @@ public class PointHelpers {
         return pointsList;
     }
 
-    public static List<Point> matOfPoint2fToList(MatOfPoint2f matOfPoint2f){
+    public static List<Point> matOfPoint2fToPointList(MatOfPoint2f matOfPoint2f){
         Point[] pointArr = matOfPoint2f.toArray();
         List<Point> pointList = new ArrayList<Point>(Arrays.asList(pointArr));
         return pointList;
+    }
+    public static List<Point3> matOfPoint2fToPoint3List(MatOfPoint2f matOfPoint2f){
+        Point[] pointArr = matOfPoint2f.toArray();
+        List<Point3> point3List = new ArrayList<Point3>();
+        for (int i = 0; i < pointArr.length; i++) {
+            Point clone = pointArr[i].clone();
+            point3List.add(new Point3(clone.x,clone.y,1));
+        }
+        return point3List;
     }
     public static MatOfPoint2f pointsListToMatOfPoint2f(List<Point> points){
         MatOfPoint2f matOfPoint2f = new MatOfPoint2f();
@@ -82,4 +88,20 @@ public class PointHelpers {
     public static double getTrainIdxFromMatOfDMatch(MatOfDMatch matOfDMatch) {
         return matOfDMatch.get(0, 0)[1];
     }
+
+    public static Mat matFromArray(double[][] array){
+        Mat mat = new Mat(array.length,array[0].length,CvType.CV_64F);
+        for (int i = 0; i < array.length; i++) {
+
+            mat.put(i, 0, array[i]);
+        }
+        return mat;
+    }
+
+    public static Mat multiplyMat(Mat mat1, Mat mat2){
+        Mat result = Mat.zeros(mat1.rows(), mat2.cols(), mat1.type());
+        Core.gemm(mat1,mat2,1,new Mat(),0,result,0);
+        return result;
+    }
+
 }

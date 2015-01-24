@@ -32,23 +32,26 @@ public class CameraMatrices {
                 {r1.get(1,0)[0],r1.get(1,1)[0],r1.get(1,2)[0],t2.get(1,0)[0]},
                 {r1.get(2,0)[0],r1.get(2,1)[0],r1.get(2,2)[0],t2.get(2,0)[0]}};
         p1 = matFromArray(p1Arr);
+        System.out.println("p1:"+p1.dump());
     }
 
     public void extractRTfromEssentialMatrix() {
 //        http://answers.opencv.org/question/30781/svd-on-android-sdk/
-        Mat svd_u = new Mat(3, 3, getFundamentalMat().type());
-        Mat svd_vt = new Mat(3, 3, getFundamentalMat().type());
-        Mat svd_w = new Mat(3, 3, getFundamentalMat().type());
+        Mat svd_u = new Mat();
+        Mat svd_vt = new Mat();
+        Mat svd_w = new Mat();
 
-        Core.SVDecomp(getEssentialMat(), svd_w, svd_u, svd_vt, Core.SVD_MODIFY_A);
+        Core.SVDecomp(getEssentialMat(), svd_w, svd_u, svd_vt,Core.SVD_MODIFY_A);
+
 
         Mat w = generateWMat();
         Mat z = generateZMat();
-//        multiplyMat(multiplyMat(svd_u,generateWMat()),svd_vt).copyTo(r1);
-        r1 = multiplyMat(multiplyMat(svd_u,generateWMat()),svd_vt);
-        r2 = multiplyMat(multiplyMat(svd_u, generateZMat()), svd_vt);
+        r1 = multiplyMat(multiplyMat(svd_u,w),svd_vt);
+        r2 = multiplyMat(multiplyMat(svd_u, z), svd_vt);
         t1 = calculateT(svd_u, T1);
         t2 = calculateT(svd_u, T2);
+        System.out.println("r1:" + r1.dump());
+        System.out.println("r2:" + r2.dump());
 
     }
 
@@ -72,8 +75,6 @@ public class CameraMatrices {
     }
 
     public Mat multiplyMat(Mat mat1, Mat mat2){
-//        System.out.println(mat1.dump());
-//        System.out.println(mat2.dump());
         Mat result = Mat.zeros(mat1.rows(), mat2.cols(), mat1.type());
         Core.gemm(mat1,mat2,1,new Mat(),0,result,0);
         return result;
@@ -89,7 +90,7 @@ public class CameraMatrices {
 
     private Mat generateKMat() {
         Mat camMat = new Mat(3, 3, getFundamentalMat().type());
-        double camMatrixArray[][] = {{2779.8170435219467, 0., 1631.5}, {0., 2779.8170435219467, 1223.5}, {0., 0., 1.}};
+        double camMatrixArray[][] = {{2.7798170435219467e+003, 0., 1.6315000000000000e+003}, {0.,2.7798170435219467e+003, 1.2235000000000000e+003}, {0., 0., 1.}};
         for (int i = 0; i < camMatrixArray.length; i++) {
             camMat.put(i, 0, camMatrixArray[i]);
         }
@@ -120,10 +121,7 @@ public class CameraMatrices {
         for (int i = 0; i < wMatrixArray.length; i++) {
             pMat.put(i, 0, wMatrixArray[i]);
         }
-
-        Mat kpMat = multiplyMat(getKMat(),pMat);
-
-        return kpMat;
+        return pMat;
     }
 
     public Mat getP() {
