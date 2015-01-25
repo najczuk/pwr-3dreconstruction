@@ -36,13 +36,9 @@ public class Main {
         System.out.println("fundamental:" + calculator.getFundamentalMat().dump());
         System.out.println("k mat:" + calculator.getKMat().dump());
         System.out.println("essential:" + calculator.getEssentialMat().dump());
-////        System.out.println(calculator.getEssentialMat().type());
-//        calculator.extractRTfromEssentialMatrix();
-//        System.out.println("p1 matrix");
-//        System.out.println(calculator.getP1().dump());
-//
-//        Triangulator triangulator = new Triangulator(matcher.getMatchPoints1(),matcher.getMatchPoints2(),calculator
-//                .getP(),calculator.getP1());
+
+        Triangulator triangulator = new Triangulator(matcher.getMatchPoints1(),matcher.getMatchPoints2(),calculator
+                .getP(),calculator.getP1(),calculator.getKMat());
 
 //        calculator.calculateCameraMatrices();
 
