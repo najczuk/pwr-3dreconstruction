@@ -11,12 +11,15 @@ import java.util.Arrays;
  * Time: 21:17
  */
 public class CameraMatrices {
-    Mat fundamentalMat, essentialMat, kMat,distortionCoefficentsMat;
+    Mat fundamentalMat, essentialMat, kMat, distortionCoefficentsMat;
     Mat r1, r2, t1, t2;
     Mat p, p1;
+    Mat img1, img2;
     private static int T1 = 1, T2 = -1;
 
-    public CameraMatrices(Mat fundamentalMat) {
+    public CameraMatrices(Mat fundamentalMat, Mat img1, Mat img2) {
+        this.img1 = img1;
+        this.img2 = img2;
         this.fundamentalMat = fundamentalMat;
         this.kMat = generateKMat();
         this.distortionCoefficentsMat = generateDistortionCoefficents();
@@ -45,7 +48,7 @@ public class CameraMatrices {
         double[][] p4Arr = {{r2.get(0, 0)[0], r2.get(0, 1)[0], r2.get(0, 2)[0], t2.get(0, 0)[0]},
                 {r2.get(1, 0)[0], r2.get(1, 1)[0], r2.get(1, 2)[0], t2.get(1, 0)[0]},
                 {r2.get(2, 0)[0], r2.get(2, 1)[0], r2.get(2, 2)[0], t2.get(2, 0)[0]}};
-        p1 = matFromArray(p4Arr);
+        p1 = matFromArray(p1Arr);
         System.out.println("p1:" + p1.dump());
     }
 
@@ -104,7 +107,8 @@ public class CameraMatrices {
 
     private Mat generateKMat() {
         Mat camMat = new Mat(3, 3, getFundamentalMat().type());
-        double camMatrixArray[][] = {{2.7798170435219467e+003, 0., 1.6315000000000000e+003}, {0., 2.7798170435219467e+003, 1.2235000000000000e+003}, {0., 0., 1.}};
+        double max = Math.max(img1.cols(), img2.rows());
+        double camMatrixArray[][] = {{max, 0., img1.cols() / 2}, {0., max, img1.rows() / 2}, {0., 0., 1.}};
         for (int i = 0; i < camMatrixArray.length; i++) {
             camMat.put(i, 0, camMatrixArray[i]);
         }

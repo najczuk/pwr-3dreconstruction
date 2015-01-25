@@ -18,29 +18,18 @@ import java.util.List;
  * Date: 1/15/2015
  * Time: 19:48
  */
-public class OFMatcher {
-    Mat img1, img2;
-    MatOfKeyPoint leftKeypoints, rightKeypoints;
-    double RATIO = 0.7;
+public class OFMatcher extends Matcher{
 
     public OFMatcher(Mat img1, Mat img2) {
-        this.img1 = img1;
-        this.img2 = img2;
-        detectKeypoints(img1, img2);
-    }
-
-    private void detectKeypoints(Mat img1, Mat img2) {
-        this.leftKeypoints = new MatOfKeyPoint();
-        this.rightKeypoints = new MatOfKeyPoint();
-        FeatureDetector detector = FeatureDetector.create(FeatureDetector.FAST);
-        detector.detect(img1, leftKeypoints);
-        detector.detect(img2, rightKeypoints);
+        super(img1, img2);
     }
 
     public void match() {
 
+        this.detector = FeatureDetector.create(FeatureDetector.FAST);
+        detect();
 
-        MatOfPoint2f leftPointsMat = Helpers.keyPointsToMatOfPoint2f(leftKeypoints);
+        MatOfPoint2f leftPointsMat = Helpers.keyPointsToMatOfPoint2f(keyPoints1);
         MatOfPoint2f rightPointsMat = new MatOfPoint2f();
 
         //calculate leftPoints movement
@@ -53,7 +42,7 @@ public class OFMatcher {
         Converters.Mat_to_vector_Point2f(leftPointsMat, leftPoints);
         Converters.Mat_to_vector_Point2f(rightPointsMat, rightPoints);
 
-        System.out.println(Arrays.deepToString(leftPoints.toArray()));
+//        System.out.println(Arrays.deepToString(leftPoints.toArray()));
 
         //filter high error points and keep original index
         List<Point> rightPointsToFind = new ArrayList<Point>();
@@ -67,20 +56,29 @@ public class OFMatcher {
 
         //match rightPoints found by OF to its features
         Mat rightPointsToFindMat = Converters.vector_Point2f_to_Mat(rightPointsToFind).reshape(1, rightPointsToFind.size());
-        Mat rightPointsFeatures = Helpers.keyPointsToMatOfPoint2f(rightKeypoints).reshape(1, rightKeypoints.rows());
+        Mat rightPointsFeatures = Helpers.keyPointsToMatOfPoint2f(keyPoints2).reshape(1, keyPoints2.rows());
 
 //        System.out.println(rightPointsToFindMat.dump());
 //        System.out.println(rightPointsFeatures.dump());
 
-        DescriptorMatcher bfMatcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE);
+        DescriptorMatcher bfMatcher = DescriptorMatcher.create(DescriptorMatcher.FLANNBASED);
         List<MatOfDMatch> bfMatches = new ArrayList<MatOfDMatch>();
         bfMatcher.radiusMatch(rightPointsToFindMat, rightPointsFeatures, bfMatches, 2.0f);
 
-        for (MatOfDMatch match : bfMatches) {
-            System.out.println(match.dump());
-        }
         List<DMatch> goodMatchesWithOriginalQueryIdx = ofRatioTest(bfMatches, rightPointsToFindBackIndex);
+        this.goodMatches = goodMatchesWithOriginalQueryIdx;
+        MatOfPoint2f points1 = new MatOfPoint2f();
+        MatOfPoint2f points2 = new MatOfPoint2f();
 
+
+        Helpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        this.matchPoints1 = points1;
+        this.matchPoints2 = points2;
+
+        this.goodMatches = ransacTest(points1, points2, this.goodMatches);
+        Helpers.sortedKeyPointsToMatOfPoint2f(getKeyPoints1(), getKeyPoints2(), getGoodMatches(), points1, points2);
+        this.matchPoints1 = points1;
+        this.matchPoints2 = points2;
 
 
     }
@@ -98,7 +96,6 @@ public class OFMatcher {
                 queryIdx = (int) Helpers.getQueryIdxFromMatOfDMatch(match);
                 oldQueryIdx = originalIndexes.get(queryIdx);
                 trainIdx = (int) Helpers.getTrainIdxFromMatOfDMatch(match);
-                System.out.println("here");
 
                 goodMatchesWithOriginalIndexes.add(new DMatch(
                         oldQueryIdx,
@@ -107,7 +104,7 @@ public class OFMatcher {
                 ));
             } else if (match.rows() > 1) {
                 ratio = Helpers.distanceFromKNNMatch(match, 0) / Helpers.distanceFromKNNMatch(match, 1);
-                if (ratio <= RATIO) {
+                if (ratio < 0.7) {
                     queryIdx = (int) Helpers.getQueryIdxFromMatOfDMatch(match);
                     oldQueryIdx = originalIndexes.get(queryIdx);
                     trainIdx = (int) Helpers.getTrainIdxFromMatOfDMatch(match);
@@ -120,9 +117,8 @@ public class OFMatcher {
                 }
             }
         }
-
+        System.out.println("Before ratio-test: " + matches.size() + " After: " + goodMatchesWithOriginalIndexes.size());
         return goodMatchesWithOriginalIndexes;
 
     }
-
 }

@@ -5,6 +5,9 @@ import org.opencv.highgui.Highgui;
 import reconstruction.geometry.EpipolarGeometry;
 import reconstruction.geometry.CameraMatrices;
 import reconstruction.matcher.Matcher;
+import reconstruction.matcher.OFMatcher;
+import reconstruction.matcher.RichMatcher;
+import reconstruction.matcher.SparseMatcher;
 import reconstruction.triangulation.Triangulator;
 
 /**
@@ -18,10 +21,11 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Mat img1 = Highgui.imread("images/sfinks/20150105_221355.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-        Mat img2 = Highgui.imread("images/sfinks/20150105_221400.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img1 = Highgui.imread("images/sf2/1.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img2 = Highgui.imread("images/sf2/2.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
-        Matcher matcher = new Matcher(img1, img2);
+        Matcher matcher = new RichMatcher(img1, img2);
+        matcher.match();
         Mat outImg = matcher.drawMatchesAndKeyPoints("images\\SylvainJpg\\out.jpg");
         EpipolarGeometry geometry = new EpipolarGeometry(matcher.getMatchPoints1(),matcher.getMatchPoints2());
         outImg = geometry.drawEpiLines(outImg);
@@ -31,7 +35,7 @@ public class Main {
 //        Mat im1 = geometry.drawEpipolarLinesOnImage(matcher.getImg1(),0);
 //        Mat im2 = geometry.drawEpipolarLinesOnImage(matcher.getImg2(),1);
 
-        CameraMatrices calculator = new CameraMatrices(geometry.getFundamentalMatrix());
+        CameraMatrices calculator = new CameraMatrices(geometry.getFundamentalMatrix(),img1,img2);
 
         System.out.println("fundamental:" + calculator.getFundamentalMat().dump());
         System.out.println("k mat:" + calculator.getKMat().dump());

@@ -103,5 +103,9 @@ public class Helpers {
         Core.gemm(mat1,mat2,1,new Mat(),0,result,0);
         return result;
     }
+    public static double getDistanceFromKNNMatch(MatOfDMatch matOfDMatch, int neighbourIndex) {
+        return matOfDMatch.get(neighbourIndex, 0)[3];
+    }
+
 
 }
