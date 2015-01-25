@@ -3,6 +3,7 @@ package reconstruction.geometry;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.*;
 import org.opencv.highgui.Highgui;
+import reconstruction.point.Helpers;
 
 /**
  * User: Adrian
@@ -28,6 +29,11 @@ public class EpipolarGeometry {
         this.srcPoints = srcPoints;
         this.dstPoints = dstPoints;
         computeFundamentalMatrix();
+//        double[][] fArr = {{-1.06369074652164e-05, 5.534800101120218e-05, 0.05167473041551945},
+//                {-1.233194862282393e-05, 9.40255120579606e-06, -0.2343330436441868},
+//                {-0.05031636334763256, 0.2165058936350157, 1}};
+//        Mat fundTest = Helpers.matFromArray(fArr);
+//        fundamentalMatrix = fundTest;
         computeEpiLines();
 
     }

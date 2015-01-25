@@ -2,6 +2,7 @@ package reconstruction.geometry;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import reconstruction.point.Helpers;
 
 import java.util.Arrays;
 
@@ -25,8 +26,6 @@ public class CameraMatrices {
         this.distortionCoefficentsMat = generateDistortionCoefficents();
         this.essentialMat = calculateEssentialMatrix();
         calculateCameraMatrices(); //initiates p and p1
-
-
     }
 
     public void calculateCameraMatrices() {
@@ -48,8 +47,16 @@ public class CameraMatrices {
         double[][] p4Arr = {{r2.get(0, 0)[0], r2.get(0, 1)[0], r2.get(0, 2)[0], t2.get(0, 0)[0]},
                 {r2.get(1, 0)[0], r2.get(1, 1)[0], r2.get(1, 2)[0], t2.get(1, 0)[0]},
                 {r2.get(2, 0)[0], r2.get(2, 1)[0], r2.get(2, 2)[0], t2.get(2, 0)[0]}};
-        p1 = matFromArray(p1Arr);
-        System.out.println("p1:" + p1.dump());
+        p1 = matFromArray(p4Arr);
+        Mat p11 = matFromArray(p1Arr);
+        Mat p12 = matFromArray(p2Arr);
+        Mat p13 = matFromArray(p3Arr);
+        Mat p14 = matFromArray(p4Arr);
+        System.out.println("p1:\n" + p11.dump());
+        System.out.println("p2\n:" + p12.dump());
+        System.out.println("p3:\n" + p13.dump());
+        System.out.println("p4:\n" + p14.dump());
+        System.out.println("p:\n" + p.dump());
     }
 
     public void extractRTfromEssentialMatrix() {
@@ -60,6 +67,10 @@ public class CameraMatrices {
 
         Core.SVDecomp(getEssentialMat(), svd_w, svd_u, svd_vt, Core.SVD_MODIFY_A);
 
+        System.out.println("U:\n"+svd_u.dump());
+        System.out.println("Vt:\n"+svd_vt.dump());
+        System.out.println("W:\n"+svd_w.dump());
+
 
         Mat w = generateWMat();
         Mat z = generateZMat();
@@ -67,8 +78,10 @@ public class CameraMatrices {
         r2 = multiplyMat(multiplyMat(svd_u, z), svd_vt);
         t1 = calculateT(svd_u, T1);
         t2 = calculateT(svd_u, T2);
-        System.out.println("r1:" + r1.dump());
-        System.out.println("r2:" + r2.dump());
+        System.out.println("r1:\n" + r1.dump());
+        System.out.println("r2:\n" + r2.dump());
+        System.out.println("t1:\n" + t1.dump());
+        System.out.println("t2:\n" + t2.dump());
 
     }
 
@@ -77,7 +90,7 @@ public class CameraMatrices {
 
         t.put(0, 0, tSign * svd_u.get(0, 2)[0]);
         t.put(1, 0, tSign * svd_u.get(1, 2)[0]);
-        t.put(2, 0, tSign * svd_u.get(1, 2)[0]);
+        t.put(2, 0, tSign * svd_u.get(2, 2)[0]);
 
         return t;
     }
@@ -136,7 +149,7 @@ public class CameraMatrices {
 
     public Mat generateZMat() {
         Mat zMat = new Mat(3, 3, getFundamentalMat().type());
-        double wMatrixArray[][] = {{0, 1, 0}, {-1, 0, 0}, {0., 0., 0}}; // HZ 9.13
+        double wMatrixArray[][] = {{0, 1, 0}, {-1, 0, 0}, {0., 0., 1.}}; // HZ 9.13
         for (int i = 0; i < wMatrixArray.length; i++) {
             zMat.put(i, 0, wMatrixArray[i]);
         }

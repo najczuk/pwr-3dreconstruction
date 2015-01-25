@@ -57,19 +57,26 @@ public class Triangulator {
                 {0, 0, 0, 1}
         };
 
-        Mat kInv = k.inv();
+        Mat kInv = new Mat(3,3,CvType.CV_64FC1);
+        Core.invert(k,kInv);
+        System.out.println("Kinv:\n"+kInv.dump());
 
-        Mat kP1 = CameraMatrices.multiplyMat(k, p1);
         for (int i = 0; i < leftPoints.size(); i++) {
             Point3 u = leftPoints.get(i);
             double[][] uArr = {{u.x} ,{u.y}, {u.z}};
             Mat um = CameraMatrices.multiplyMat(kInv,Helpers.matFromArray(uArr));
+            u.x=um.get(0,0)[0];u.y=um.get(1,0)[0];u.z=um.get(2,0)[0];
 
             Point3 u1 = rightPoints.get(i);
             double[][] u1Arr = {{u1.x} ,{u1.y}, {u1.z}};
             Mat u1m = CameraMatrices.multiplyMat(kInv,Helpers.matFromArray(u1Arr));
+            u1.x=u1m.get(0,0)[0];u1.y=u1m.get(1,0)[0];u1.z=u1m.get(2,0)[0];
+//            System.out.println("u:" +u.toString());
+//            System.out.println("u1:" +u1.toString());
+            Mat x = iterativeLLSTriangulation(u, p, u1, p1);
 
-            Mat x = iterativeLLSTriangulation(u,p,u1,p1);
+
+            System.out.println(x.get(0,0)[0] + " " +x.get(1,0)[0] + " "+x.get(2,0)[0] );
 
         }
 
@@ -121,7 +128,7 @@ public class Triangulator {
             x.put(3, 0, 1.);
         }
 
-        System.out.println(x.get(0,0)[0]*10000+" "+x.get(1,0)[0]*10000+" "+x.get(2,0)[0]*10000+" 0 0 0");
+//        System.out.println(x.get(0,0)[0]*10000+" "+x.get(1,0)[0]*10000+" "+x.get(2,0)[0]*10000+" 0 0 0");
 
 
         return x; //TODO
@@ -129,22 +136,25 @@ public class Triangulator {
     }
 
     private Mat lsTriangulation(Point3 u, Mat p, Point3 u1, Mat p1) {
+//        System.out.println("u:"+u.toString()+" u1: "+u1.toString());
         double[][] a =
-                {{u.x * p.get(2, 0)[0] - p.get(0, 0)[0], u.x * p.get(2, 1)[0] - p.get(0, 1)[0], u.x * p.get(2, 3)[0] - p.get(0, 2)[0]},
+                {{u.x * p.get(2, 0)[0] - p.get(0, 0)[0], u.x * p.get(2, 1)[0] - p.get(0, 1)[0], u.x * p.get(2, 2)[0]
+                        - p.get(0, 2)[0]},
                         {u.y * p.get(2, 0)[0] - p.get(1, 0)[0], u.y * p.get(2, 1)[0] - p.get(1, 1)[0], u.y * p.get(2, 2)[0] - p.get(1, 2)[0]},
-                        {u1.x * p1.get(2, 0)[0] - p1.get(0, 0)[0], u1.x * p1.get(2, 1)[0] - p1.get(0, 1)[0], u1.x * p1.get(2, 3)[0] - p1.get(0, 2)[0]},
+                        {u1.x * p1.get(2, 0)[0] - p1.get(0, 0)[0], u1.x * p1.get(2, 1)[0] - p1.get(0, 1)[0], u1.x *
+                                p1.get(2, 2)[0] - p1.get(0, 2)[0]},
                         {u1.y * p1.get(2, 0)[0] - p1.get(1, 0)[0], u1.y * p1.get(2, 1)[0] - p1.get(1, 1)[0], u1.y * p1.get(2, 2)[0] - p1.get(1, 2)[0]}
                 };
 
         double[][] b = {
-                {-u.x * p.get(2, 3)[0] - p.get(0, 3)[0]},
-                {-u.y * p.get(2, 3)[0] - p.get(1, 3)[0]},
-                {-u1.x * p1.get(2, 3)[0] - p1.get(0, 3)[0]},
-                {-u1.y * p1.get(2, 3)[0] - p1.get(1, 3)[0]}
+                {-(u.x * p.get(2, 3)[0] - p.get(0, 3)[0])},
+                {-(u.y * p.get(2, 3)[0] - p.get(1, 3)[0])},
+                {-(u1.x * p1.get(2, 3)[0] - p1.get(0, 3)[0])},
+                {-(u1.y * p1.get(2, 3)[0] - p1.get(1, 3)[0])}
         };
 
-        Mat aMat = new Mat(4, 3, CvType.CV_64F);
-        Mat bMat = new Mat(4, 1, CvType.CV_64F);
+        Mat aMat = Helpers.matFromArray(a);
+        Mat bMat = Helpers.matFromArray(b);
 
         aMat.put(0, 0, a[0]);
         aMat.put(1, 0, a[1]);
@@ -155,6 +165,9 @@ public class Triangulator {
         bMat.put(1, 0, b[1]);
         bMat.put(2, 0, b[2]);
         bMat.put(3, 0, b[3]);
+
+//        System.out.println("A: \n"+aMat.dump());
+//        System.out.println("B: \n"+bMat.dump());
 
         Mat xMat = new Mat();
         Core.solve(aMat, bMat, xMat, Core.DECOMP_SVD);

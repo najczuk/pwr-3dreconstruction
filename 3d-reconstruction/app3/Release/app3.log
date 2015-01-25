@@ -1,9 +1,11 @@
-﻿Build started 12/30/2014 11:39:05.
+﻿Build started 1/25/2015 23:01:08.
      1>Project "D:\workspace\pwr\pwr-3dreconstruction\3d-reconstruction\app3\app3.vcxproj" on node 2 (Build target(s)).
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V120\Microsoft.CppBuild.targets(388,5): warning MSB8028: The intermediate directory (Release\) contains files shared from another project (app3.vcxproj).  This can lead to incorrect clean and rebuild behavior.
      1>ClCompile:
          F:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ID:\dev\opencv\build\include /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\..\..\..\dev\opencv\sources\samples\cpp\3drecon.cpp
          3drecon.cpp
+     1>..\..\..\..\..\dev\opencv\sources\samples\cpp\3drecon.cpp(40): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
+     1>..\..\..\..\..\dev\opencv\sources\samples\cpp\3drecon.cpp(105): warning C4244: 'argument' : conversion from 'double' to 'float', possible loss of data
        Link:
          F:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\workspace\pwr\pwr-3dreconstruction\3d-reconstruction\Release\3drecon.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\workspace\pwr\pwr-3dreconstruction\3d-reconstruction\app3" /LIBPATH:D:\dev\opencv\build\x86\vc12\lib opencv_calib3d2410.lib opencv_contrib2410.lib opencv_core2410.lib opencv_features2d2410.lib opencv_flann2410.lib opencv_gpu2410.lib opencv_highgui2410.lib opencv_imgproc2410.lib opencv_legacy2410.lib opencv_ml2410.lib opencv_nonfree2410.lib opencv_objdetect2410.lib opencv_ocl2410.lib opencv_photo2410.lib opencv_stitching2410.lib opencv_superres2410.lib opencv_ts2410.lib opencv_video2410.lib opencv_videostab2410.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\workspace\pwr\pwr-3dreconstruction\3d-reconstruction\Release\3drecon.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\workspace\pwr\pwr-3dreconstruction\3d-reconstruction\Release\3drecon.lib" /MACHINE:X86 /SAFESEH Release\3drecon.obj
          Generating code
@@ -13,4 +15,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.80
+Time Elapsed 00:00:01.99
