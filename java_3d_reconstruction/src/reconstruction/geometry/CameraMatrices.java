@@ -47,7 +47,7 @@ public class CameraMatrices {
         double[][] p4Arr = {{r2.get(0, 0)[0], r2.get(0, 1)[0], r2.get(0, 2)[0], t2.get(0, 0)[0]},
                 {r2.get(1, 0)[0], r2.get(1, 1)[0], r2.get(1, 2)[0], t2.get(1, 0)[0]},
                 {r2.get(2, 0)[0], r2.get(2, 1)[0], r2.get(2, 2)[0], t2.get(2, 0)[0]}};
-        p1 = matFromArray(p4Arr);
+        p1 = matFromArray(p1Arr);
         Mat p11 = matFromArray(p1Arr);
         Mat p12 = matFromArray(p2Arr);
         Mat p13 = matFromArray(p3Arr);

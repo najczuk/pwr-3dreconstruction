@@ -26,7 +26,11 @@ public class Triangulator {
         this.p = p;
         this.p1 = p1;
         this.k = k;
-        triangulatePoints(p,p1,k);
+        try {
+            triangulatePoints(p,p1,k);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 //        simpleTriangulation();
 //        iterativeLLSTriangulation(leftPoints.get(0), p, rightPoints.get(0), p1);
 //        lsTriangulation(leftPoints.get(0),p,rightPoints.get(0),p1);
@@ -49,7 +53,7 @@ public class Triangulator {
 
     }
 
-    private void triangulatePoints(Mat p, Mat p1, Mat k) {
+    private void triangulatePoints(Mat p, Mat p1, Mat k) throws FileNotFoundException {
         double[][] p1HArr = {
                 {p1.get(0, 0)[0], p1.get(0, 1)[0], p1.get(0, 2)[0], p1.get(0, 3)[0]},
                 {p1.get(1, 0)[0], p1.get(1, 1)[0], p1.get(1, 2)[0], p1.get(1, 3)[0]},
@@ -60,7 +64,14 @@ public class Triangulator {
         Mat kInv = new Mat(3,3,CvType.CV_64FC1);
         Core.invert(k,kInv);
         System.out.println("Kinv:\n"+kInv.dump());
-
+        PrintWriter writer = new PrintWriter("images/results/rafi.ply");
+        writer.println("ply\n" +
+                "format ascii 1.0\n" +
+                "element vertex "+leftPoints.size()+"\n" +
+                "property float x\n" +
+                "property float y\n" +
+                "property float z\n" +
+                "end_header");
         for (int i = 0; i < leftPoints.size(); i++) {
             Point3 u = leftPoints.get(i);
             double[][] uArr = {{u.x} ,{u.y}, {u.z}};
@@ -74,12 +85,10 @@ public class Triangulator {
 //            System.out.println("u:" +u.toString());
 //            System.out.println("u1:" +u1.toString());
             Mat x = iterativeLLSTriangulation(u, p, u1, p1);
-
-
-            System.out.println(x.get(0,0)[0] + " " +x.get(1,0)[0] + " "+x.get(2,0)[0] );
-
+            writer.println(x.get(0, 0)[0] + " " + x.get(1, 0)[0] + " " + x.get(2, 0)[0]);
         }
-
+        writer.flush();
+        writer.close();
 
     }
 

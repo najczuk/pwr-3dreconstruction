@@ -21,15 +21,15 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Mat img1 = Highgui.imread("images/sf2/1.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
-        Mat img2 = Highgui.imread("images/sf2/2.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img1 = Highgui.imread("images/rafi/1.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
+        Mat img2 = Highgui.imread("images/rafi/2.jpg", Highgui.CV_LOAD_IMAGE_GRAYSCALE);
 
         Matcher matcher = new RichMatcher(img1, img2);
         matcher.match();
-        Mat outImg = matcher.drawMatchesAndKeyPoints("images\\SylvainJpg\\out.jpg");
+        Mat outImg = matcher.drawMatchesAndKeyPoints("images\\rafi\\out.jpg");
         EpipolarGeometry geometry = new EpipolarGeometry(matcher.getMatchPoints1(),matcher.getMatchPoints2());
         outImg = geometry.drawEpiLines(outImg);
-        Highgui.imwrite("images\\SylvainJpg\\out1.jpg", outImg);
+        Highgui.imwrite("images\\rafi\\out1.jpg", outImg);
 
 //        DRAW SEPARATE IMGS
 //        Mat im1 = geometry.drawEpipolarLinesOnImage(matcher.getImg1(),0);
